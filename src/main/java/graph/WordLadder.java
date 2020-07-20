@@ -3,73 +3,59 @@ package graph;
 import java.util.*;
 
 public class WordLadder {
-    int minStep = Integer.MAX_VALUE;
-    Map<String, List<String>> pathCaches = new HashMap<>();
-    Map<String, Integer> stringToIndexMap = new HashMap<>();
     public int ladderLength(String beginWord, String endWord, List<String> wordList) {
-        if(!wordList.contains(endWord)) return 0;
-        int[] flags = new int[wordList.size()];
-        int[] minFlags = new int[wordList.size()];
-        Arrays.fill(flags, -1);
-        Arrays.fill(minFlags, Integer.MAX_VALUE);
-        for(int i = 0; i < wordList.size(); i ++) {
-            stringToIndexMap.put(wordList.get(i), i);
-            if(isMaxOneCharDiff(wordList.get(i), beginWord)) {
-                addToPathCaches(beginWord, wordList.get(i));
+        int endIndex = wordList.indexOf(endWord);
+        if(endIndex < 0) return 0;
+        List<String> allWords = new ArrayList<>(wordList);
+        allWords.add(0, beginWord);
+        int[][] edges = initEdges(allWords);
+        int curr = 0;
+        int[] marks = new int[edges.length];
+        for(int i = 0; i < edges.length; i ++) {
+            if(curr == -1) {
+                break;
             }
-        }
-        for(int i = 0; i < wordList.size(); i ++) {
-            for(int j = i + 1; j < wordList.size(); j ++) {
-                if(isMaxOneCharDiff(wordList.get(i), wordList.get(j))) {
-                    addToPathCaches(wordList.get(i), wordList.get(j));
-                    addToPathCaches(wordList.get(j), wordList.get(i));
-
+            for(int j = 1; j < edges.length; j ++) {
+                if(edges[0][curr] != Integer.MAX_VALUE && edges[curr][j] != Integer.MAX_VALUE) {
+                    edges[0][j] = Math.min(edges[0][curr] + edges[curr][j], edges[0][j]);
                 }
             }
+            marks[curr] = 1;
+            int minValue = Integer.MAX_VALUE;
+            int minIndex = -1;
+            for(int j = 0; j < edges.length; j ++) {
+                if(marks[j] < 1 && edges[0][j] < minValue) {
+                    minValue = edges[0][j];
+                    minIndex = j;
+                }
+            }
+            curr = minIndex;
         }
-        ladderLengthRecursive(beginWord, endWord, flags, minFlags, 0, wordList);
-        return minStep == Integer.MAX_VALUE ? 0 : minStep + 1;
+        int step = edges[0][wordList.indexOf(endWord) + 1];
+        return  step == Integer.MAX_VALUE ? 0 : step + 1;
     }
 
-    private void addToPathCaches(String from, String to) {
-        List<String> toPaths = pathCaches.get(from);
-        if(toPaths == null) {
-            toPaths = new ArrayList<>();
+    private int[][] initEdges(List<String> allWords) {
+        int edges[][] = new int[allWords.size()][allWords.size()];
+        for(int i = 0; i < allWords. size(); i ++) {
+            for(int j = i + 1; j < allWords.size(); j ++) {
+                edges[i][j] = canGo(allWords.get(i), allWords.get(j));
+                edges[j][i] = edges[i][j];
+            }
         }
-        toPaths.add(to);
-        pathCaches.put(from, toPaths);
-
+        return edges;
     }
 
-    private boolean ladderLengthRecursive(String beginWord, String endWord, int[] flags, int[] minFlags, int deep, List<String> wordList) {
-        if(beginWord.equalsIgnoreCase(endWord)) {
-            minStep  = Math.min(deep, minStep);
-            return true;
-        }
-        if(deep >= wordList.size()) return false;
-        for(String nextPaths : pathCaches.getOrDefault(beginWord, new ArrayList<>())) {
-            int i = stringToIndexMap.get(nextPaths);
-            if(minFlags[i] <= deep) continue;
-            flags[i] = deep;
-            if(ladderLengthRecursive(wordList.get(i), endWord, flags, minFlags, deep + 1, wordList)) {
-                minFlags[i] = deep;
+    private int canGo(String s, String t) {
+        int diff = 0;
+        for(int i = 0; i < s.length(); i ++) {
+            if(s.charAt(i) != t.charAt(i)) {
+                diff ++;
             }
-            flags[i] = -1;
-        }
-        return false;
-    }
-
-    private boolean isMaxOneCharDiff(String src, String target) {
-        int totalDiff = 0;
-        for(int i = 0; i < src.length(); i ++) {
-            if(src.charAt(i) != target.charAt(i)) {
-                totalDiff ++;
-            }
-            if(totalDiff > 1) {
-                return false;
+            if(diff == 2) {
+                return Integer.MAX_VALUE;
             }
         }
-
-        return totalDiff == 1;
+        return diff == 1 ? diff : Integer.MAX_VALUE;
     }
 }

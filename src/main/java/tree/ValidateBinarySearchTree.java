@@ -37,9 +37,9 @@ public class ValidateBinarySearchTree {
 
     public boolean isValidBST2(TreeNode root) {
         Stack<TreeNode> stack = new Stack<>();
-        boolean isValid = true;
         TreeNode curr = root;
         int lastVisNum = Integer.MIN_VALUE;
+        boolean isValid = true;
         for(;!stack.isEmpty() || curr != null;) {
             for(;curr != null;) {
                 stack.push(curr);
